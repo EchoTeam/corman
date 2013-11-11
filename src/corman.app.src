@@ -1,0 +1,12 @@
+{application, corman,
+ [
+  {description, "Configuration reload manager for Erlang applications"},
+  {vsn, "1.0.0"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { corman_app, []}},
+  {env, []}
+ ]}.
