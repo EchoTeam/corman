@@ -1,35 +1,34 @@
 -module(corman).
 
 %% API
--export([reload/0,
-         reload/1]).
+-export([reload/1,
+         reload/2]).
+
+
+-type application() :: atom().
 
 %%%===================================================================
 %%% API
 %%%===================================================================
 
-reload() ->
+-spec reload(AppsToRestart :: [application()]) -> {'ok', [application()]}.
+reload(AppsToRestart) ->
     AvailableApplications = [Application || {Application, _, _} <- application:loaded_applications()],
 
-    reload_ll(AvailableApplications).
+    reload_ll(AvailableApplications, AppsToRestart).
 
-reload(Applications) ->
-    LoadedApplications = [Application || {Application, _, _} <- application:loaded_applications()],
-
-    ApplicationsSet1 = sets:from_list(Applications),
-    ApplicationsSet2 = sets:from_list(LoadedApplications),
-
-    AvailableApplications = sets:to_list(sets:intersection(ApplicationsSet1, ApplicationsSet2)),
-    reload_ll(AvailableApplications).
+-spec reload(Applications :: [application()], AppsToRestart :: [application()]) -> {'ok', [application()]}.
+reload(Applications, AppsToRestart) ->
+    reload_ll(Applications, AppsToRestart).
 
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
 
-reload_ll(Applications) ->
+reload_ll(Applications, AppsToRestart) ->
     {ok, [[File]]} = init:get_argument(config),
     {ok, Config} = check_config(File),
-    reload_ll(Applications, Config).
+    reload_ll(Applications, Config, AppsToRestart).
 
 
 check_config(File) ->
@@ -59,13 +58,13 @@ parse_config(File) ->
     end.
 
 
-reload_ll(Applications, Config) ->
+reload_ll(Applications, Config, AppsToRestart) ->
     case application_specs(Applications) of
         {incorrect_specs, IncorrectApps} ->
             lager:error("Unable to reload applications configs.~n The following applications have incorrect specifications ~p", [IncorrectApps]),
             {error, {incorrect_specs, IncorrectApps}};
         Specs ->
-            {change_application_data(Specs, Config), Applications}
+            {change_application_data(Specs, Config, AppsToRestart), Applications}
     end.
 
 
@@ -96,7 +95,7 @@ make_application_spec(LoadedAppSpec, AppSpecPath) ->
     end.
 
 
-change_application_data(Specs, Config) ->
+change_application_data(Specs, Config, AppsToRestart) ->
     lager:info("Update configurations for the following applications: ~p", [[App || {_, App, _} <- Specs]]),
     % Fetch OLD applications' environment from
     % application controller's internal ETS table.
@@ -112,7 +111,7 @@ change_application_data(Specs, Config) ->
     application_controller:config_change(OldEnv),
 
     % Restart apps from the list if their configs have been changed
-    maybe_restart_apps([lager], OldEnv).
+    maybe_restart_apps(AppsToRestart, OldEnv).
 
 %% Restart particular app in Apps list if the OldEnv is different from the NewEnv
 maybe_restart_apps(Applications, OldEnv) ->
