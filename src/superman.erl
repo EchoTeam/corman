@@ -17,6 +17,18 @@
     restart_children/2
 ]).
 
+-record(supervisor_state, {
+        name,
+        strategy,
+        children = [],
+        dynamics = [],
+        intensity,
+        period,
+        restarts = [],
+        module,
+        args
+    }).
+
 %%%=================================================
 %%% API
 %%%=================================================
