@@ -7,6 +7,5 @@
                   kernel,
                   stdlib
                  ]},
-  {mod, { corman_app, []}},
   {env, []}
  ]}.
