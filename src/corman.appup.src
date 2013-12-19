@@ -1,0 +1,8 @@
+{"1.0.1",
+  [{"1.0.0",[
+     {load_module,corman}
+    ]}],
+  [{"1.0.0",[
+     {load_module,corman}
+    ]}]
+}.
