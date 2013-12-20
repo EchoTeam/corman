@@ -1,7 +1,8 @@
 -module(corman).
 
 %% API
--export([reload/1,
+-export([reload/0,
+         reload/1,
          reload/2]).
 
 
@@ -10,6 +11,9 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
+-spec reload() -> {'ok', [application()]}.
+reload() ->
+    reload([]).
 
 -spec reload(AppsToRestart :: [application()]) -> {'ok', [application()]}.
 reload(AppsToRestart) ->
@@ -32,7 +36,12 @@ reload_ll(Applications, AppsToRestart) ->
 
 
 check_config(File) ->
-    {ok, Env} = parse_config(File),
+    % Sometimes File can be without ".config" extension,
+    % so we normalize the file name.
+    Dirname = filename:dirname(File),
+    Basename = filename:basename(File, ".config"),
+    RealFileName = filename:join(Dirname, Basename) ++ ".config",
+    {ok, Env} = parse_config(RealFileName),
     Files = [Term || Term <- Env, is_list(Term)],
     case check_config(Files, []) of
         ok -> {ok, Env};
