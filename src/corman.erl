@@ -3,7 +3,8 @@
 %% API
 -export([reload/0,
          reload/1,
-         reload/2]).
+         reload/2,
+         reload/3]).
 
 
 -type application() :: atom().
@@ -18,23 +19,22 @@ reload() ->
 -spec reload(AppsToRestart :: [application()]) -> {'ok', [application()]}.
 reload(AppsToRestart) ->
     AvailableApplications = [Application || {Application, _, _} <- application:loaded_applications()],
-
-    reload_ll(AvailableApplications, AppsToRestart).
+    reload(AvailableApplications, AppsToRestart).
 
 -spec reload(Applications :: [application()], AppsToRestart :: [application()]) -> {'ok', [application()]}.
 reload(Applications, AppsToRestart) ->
-    reload_ll(Applications, AppsToRestart).
+    {ok, [[File]]} = init:get_argument(config),
+    reload(Applications, AppsToRestart, File).
+
+-spec reload(Applications:: [application()], AppsToRestart :: [application()], ConfigFile :: file:name_all()) -> {'ok', [application()]}.
+reload(Applications, AppsToRestart, ConfigFile) ->
+    {ok, Config} = check_config(ConfigFile),
+    reload_ll(Applications, Config, AppsToRestart).
 
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-
-reload_ll(Applications, AppsToRestart) ->
-    {ok, [[File]]} = init:get_argument(config),
-    {ok, Config} = check_config(File),
-    reload_ll(Applications, Config, AppsToRestart).
-
-
+    
 check_config(File) ->
     % Sometimes File can be without ".config" extension,
     % so we normalize the file name.
@@ -142,3 +142,39 @@ maybe_restart_apps(Applications, OldEnv) ->
         end,
     Applications).
 
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+
+check_config_test() ->
+    ?assertMatch({ok, _}, check_config(data("corman-2.config"))),
+    ?assertMatch({error, _}, check_config(data("corman-3.config"))),
+    ?assertMatch({ok, _}, check_config(data("corman"))),
+    ok.
+
+make_application_spec_test() ->
+    Spec = [{env, [
+                {k1, v1}, 
+                {k2, v2}
+            ]}, 
+            {modules, [m1, m2]}
+           ], 
+
+    Spec1 = make_application_spec(Spec, data("corman-1.app.config")),
+    Env1 = proplists:get_value(env, Spec1),
+    ?assertEqual(v11, proplists:get_value(k1, Env1)),
+    ?assertEqual(v3, proplists:get_value(k3, Env1)),
+    ?assertNot(proplists:is_defined(k2, Env1)),
+    Modules = proplists:get_value(modules, Spec1),
+    ?assertMatch([m1, m3], Modules),
+
+    Spec2 = make_application_spec(Spec, data("corman-2.app.config")),
+    ?assertEqual([], proplists:get_value(env, Spec2)),
+    ?assertEqual([], proplists:get_value(modules, Spec2)),
+
+    ?assertEqual(incorrect_spec, make_application_spec(Spec, data("corman-3.app.config"))),
+    ok.
+
+data(Name) ->
+    filename:join("../test/data", Name).
+
+-endif.

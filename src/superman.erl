@@ -11,6 +11,7 @@
     reconfigure_supervisor/2,
     reconfigure_supervisor_tree/2,
     start_children/2,
+    start_children/3,
     reconfigure_supervisor_init_args/2,
     reconfigure_supervisor_tree_init_args/2,
     get_child_specs/2,
@@ -47,10 +48,13 @@ reconfigure_supervisor(SupName, Specs) ->
     reconfigure_supervisor_ll(SupName, Deleted, New, Changed, 0).
     
 start_children(Module, Config) ->
+    start_children(Module, Module, Config).
+
+start_children(Name, Module, Config) ->
     ChildSpecs = get_child_specs(Module, Config),
     [{element(1, ChildSpec), Result} ||
         ChildSpec <- ChildSpecs,
-        Result <- [case supervisor:start_child(Module, ChildSpec) of
+        Result <- [case supervisor:start_child(Name, ChildSpec) of
                 {ok, R} -> {started, R};
                 {error, {already_started, _} = R} -> R;
                 {error, already_present = R} -> R;
@@ -84,7 +88,7 @@ reconfigure_supervisor_ll(SupName, Deleted, New, Changed, N) ->
     % Terminate old children
     delete_children(SupName, Deleted, N),
     % Start new children
-    start_children(SupName, New, N),
+    start_children_ll(SupName, New, N),
     % Restart changed children
     restart_children(SupName, Changed, N).
 
@@ -97,7 +101,7 @@ delete_children(SupName, Children, N) ->
             supervisor:delete_child(SupName, V)
         end, Children).
 
-start_children(SupName, Children, N) ->
+start_children_ll(SupName, Children, N) ->
     lists:foreach(
         fun(C) ->
             io:format("~sStart child: ~p~n",[s(N), element(1, C)]),
@@ -228,3 +232,60 @@ sup_specs(Module, MFA) when is_atom(Module) ->
 
 s(N) -> [ $\s || _ <- lists:seq(1, N)].
 
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+
+get_children_diff_test() ->
+    S = fun(L) -> lists:sort(L) end,
+    Sort = fun({L1, L2, L3, L4}) -> {S(L1), S(L2), S(L3), S(L4)} end,
+    OldSpecs = get_old_specs(),
+    ChangedOldSpecs = change_specs(OldSpecs),
+
+    ?assertMatch({[], [], [], OldSpecs}, Sort(get_children_diff(OldSpecs, OldSpecs))),
+    ?assertMatch({OldSpecs, [], [], []}, Sort(get_children_diff(OldSpecs, []))),
+    ?assertMatch({[], OldSpecs, [], []}, Sort(get_children_diff([], OldSpecs))),
+    ?assertMatch({[], [], ChangedOldSpecs, []}, Sort(get_children_diff(OldSpecs, ChangedOldSpecs))),
+
+    Deleted = get_deleted(),
+    Changed = get_changed(),
+    Unchanged = get_unchanged(),
+    New = get_new(),
+
+    %% The order is important (sorted)
+    NewSpecs = Changed ++ Unchanged ++ New,
+    OldSpecs1 = Deleted ++ OldSpecs,
+
+    ?assertMatch({Deleted, New, Changed, Unchanged}, Sort(get_children_diff(OldSpecs1, NewSpecs))).
+
+get_old_specs() -> [
+    {n2, {n2, s2, [a1, a2]}, r2, 1, w, [m1, m2]},
+    {n3, {n3, s3, [a1, a2]}, r3, 1, w, [m1, m2]},
+    {n4, {n4, s4, [a1, a2]}, r4, 1, w, [m1, m2]},
+    {n5, {n5, s5, [a1, a2]}, r5, 1, w, [m1, m2]}
+].
+
+get_changed() -> [
+    {n2, {n2, s2, [a1, a2]}, r2, 1, r, [m1, m2]},
+    {n3, {n3, s4, [a1, a2]}, r3, 1, w, [m1, m2]}
+].
+
+get_unchanged() -> [
+    {n4, {n4, s4, [a1, a2]}, r4, 1, w, [m1, m2]},
+    {n5, {n5, s5, [a1, a2]}, r5, 1, w, [m1, m2, m3]}
+].
+
+get_new() -> [
+    {n6, {n6, s6, [a1, a2]}, r6, 1, w, [m1, m2]}
+].
+
+get_deleted() -> [
+    {n1, {n1, s1, [a1, a2]}, r1, 1, w, [m1, m2]}
+].
+
+change_specs(Specs) ->
+    lists:map(fun change_spec/1, Specs).
+
+change_spec({Id, MFA, _RestartType, Timeout, Type, Modules}) ->
+    {Id, MFA, some_type, Timeout, Type, Modules}. 
+    
+-endif.
