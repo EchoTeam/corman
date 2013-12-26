@@ -251,8 +251,8 @@ get_children_diff_test() ->
     Unchanged = get_unchanged(),
     New = get_new(),
 
-    %% The order is important (sorted)
-    NewSpecs = Changed ++ Unchanged ++ New,
+
+    NewSpecs = lists:keysort(1, Changed ++ Unchanged ++ New),
     OldSpecs1 = Deleted ++ OldSpecs,
 
     ?assertMatch({Deleted, New, Changed, Unchanged}, Sort(get_children_diff(OldSpecs1, NewSpecs))).
@@ -275,6 +275,7 @@ get_unchanged() -> [
 ].
 
 get_new() -> [
+    {n44, {n4, s4, [a1, a2]}, r4, 1, w, [m1, m2]},
     {n6, {n6, s6, [a1, a2]}, r6, 1, w, [m1, m2]}
 ].
 
