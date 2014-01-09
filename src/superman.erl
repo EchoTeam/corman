@@ -152,6 +152,7 @@ restart_children(SupName, Children, N) ->
     lists:foreach(
         fun(C) ->
             case element(1, C) of
+                % TODO: move to config
                 data_server -> ok;      % exclude it for some reason
                 udp_stats_server -> ok; % (moved here from reconfigure_supervisor/2)
                 V ->
