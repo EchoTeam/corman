@@ -1,9 +1,8 @@
 %%% vim: ts=4 sts=4 sw=4 expandtab
 %%%
 %%% Copyright (c) 2013 JackNyfe. All rights reserved.
-%%% THIS SOFTWARE IS PROPRIETARY AND CONFIDENTIAL. DO NOT REDISTRIBUTE.
 %%%
-%%% Supervisor Reconfiguration Manager
+%%% SUPErvisor Reconfiguration MANager
 %%%
 -module(superman).
 
