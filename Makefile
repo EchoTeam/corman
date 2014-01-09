@@ -6,8 +6,8 @@ all:
 		$(REBAR) get-deps
 		$(REBAR) compile
 
-test:
-		$(REBAR) eunit skip_deps=true
+test: all
+		$(REBAR) eunit ct skip_deps=true
 
 clean:
 		$(REBAR) clean
