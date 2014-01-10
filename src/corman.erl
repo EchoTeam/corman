@@ -1,3 +1,9 @@
+%%% vim: ts=4 sts=4 sw=4 expandtab
+%%%
+%%% Copyright (c) 2013 JackNyfe. All rights reserved.
+%%%
+%%% COnfig Reload MANager
+%%%
 -module(corman).
 
 %% API
@@ -97,10 +103,11 @@ make_application_spec(Application) when is_atom(Application) ->
 make_application_spec(LoadedAppSpec, AppSpecPath) ->
     case file:consult(AppSpecPath) of
         {ok, [{application, _, AppSpec}]} ->
-            Env  = proplists:get_value(env,     AppSpec, []),
-            Mods = proplists:get_value(modules, AppSpec, []),
-            LoadedAppSpec2 = lists:keyreplace(env, 1, LoadedAppSpec, {env, Env}),
-            lists:keyreplace(modules, 1, LoadedAppSpec2, {modules, Mods});
+            ParamsToUpdate = [env, modules, included_applications],
+            lists:foldl(fun(P, Acc) ->
+                V = proplists:get_value(P, AppSpec, []),
+                lists:keyreplace(P, 1, Acc, {P, V})
+            end, LoadedAppSpec, ParamsToUpdate);
         {error, _Reason} ->
             incorrect_spec
     end.

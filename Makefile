@@ -6,10 +6,10 @@ all:
 		$(REBAR) get-deps
 		$(REBAR) compile
 
-test-unit:
+test-unit: all
 		$(REBAR) eunit skip_deps=true
 
-test-ct:
+test-ct: all
 		$(REBAR) ct skip_deps=true
 
 check:		test-unit test-ct
