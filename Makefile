@@ -1,13 +1,18 @@
-.PHONY: all test clean
+.PHONY: all clean test-unit test-ct check
 
-REBAR="./rebar"
+REBAR= `which ./rebar || rebar`
 
 all:
 		$(REBAR) get-deps
 		$(REBAR) compile
 
-test:
+test-unit:
 		$(REBAR) eunit skip_deps=true
+
+test-ct:
+		$(REBAR) ct skip_deps=true
+
+check:		test-unit test-ct
 
 clean:
 		$(REBAR) clean
