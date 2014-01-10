@@ -1,6 +1,6 @@
 .PHONY: all get-deps compile clean test-unit test-ct check
 
-REBAR= $(shell which ./rebar || which rebar)
+REBAR := $(shell which ./rebar || which rebar)
 
 all: get-deps compile
 
