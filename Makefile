@@ -1,10 +1,14 @@
-.PHONY: all clean test-unit test-ct check
+.PHONY: all get-deps compile clean test-unit test-ct check
 
-REBAR= `which ./rebar || rebar`
+REBAR= $(shell which ./rebar || which rebar)
 
-all:
-		$(REBAR) get-deps
+all: get-deps compile
+
+compile:
 		$(REBAR) compile
+
+get-deps:
+		$(REBAR) get-deps
 
 test-unit: all
 		$(REBAR) eunit skip_deps=true
@@ -17,5 +21,5 @@ check:		test-unit test-ct
 clean:
 		$(REBAR) clean
 		rm -rf ./ebin
-		rm -rf ./deps
+		rm -rf ./logs
 		rm -rf ./erl_crash.dump
