@@ -5,24 +5,24 @@ REBAR := $(shell which ./rebar || which rebar)
 all: get-deps compile
 
 compile:
-		$(REBAR) compile
+	$(REBAR) compile
 
 get-deps:
-		$(REBAR) get-deps
+	$(REBAR) get-deps
 
 test-unit: all
-		$(REBAR) eunit skip_deps=true
+	$(REBAR) eunit skip_deps=true
 
 test-ct: all
-		$(REBAR) ct skip_deps=true
+	$(REBAR) ct skip_deps=true
 
 check: test-unit test-ct
 
 clean:
-		$(REBAR) clean
-		rm -rf ./ebin
-		rm -rf ./logs
-		rm -rf ./erl_crash.dump
+	$(REBAR) clean
+	rm -rf ./ebin
+	rm -rf ./logs
+	rm -rf ./erl_crash.dump
 
 distclean: clean
-		rm -rf ./deps
+	rm -rf ./deps
