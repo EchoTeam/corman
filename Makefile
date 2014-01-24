@@ -1,4 +1,4 @@
-.PHONY: all get-deps compile clean test-unit test-ct check
+.PHONY: all get-deps compile clean test-unit test-ct check distclean
 
 REBAR := $(shell which ./rebar || which rebar)
 
