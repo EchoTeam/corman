@@ -22,7 +22,9 @@ clean:
 	$(REBAR) clean
 	rm -rf ./ebin
 	rm -rf ./logs
-	rm -rf ./erl_crash.dump
+	rm -f ./erl_crash.dump
+	rm -rf ./.eunit
+	rm -f ./test/*.beam
 
 distclean: clean
 	rm -rf ./deps
