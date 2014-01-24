@@ -16,10 +16,13 @@ test-unit: all
 test-ct: all
 		$(REBAR) ct skip_deps=true
 
-check:		test-unit test-ct
+check: test-unit test-ct
 
 clean:
 		$(REBAR) clean
 		rm -rf ./ebin
 		rm -rf ./logs
 		rm -rf ./erl_crash.dump
+
+distclean: clean
+		rm -rf ./deps
