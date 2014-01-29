@@ -7,13 +7,16 @@
 -module(corman).
 
 %% API
--export([reload/0,
+-export([get_all_env/0,
+         get_all_env/1,
+         reload/0,
          reload/1,
          reload/2,
          reload/3]).
 
 
 -type application() :: atom().
+-type env() :: term().
 
 %%%===================================================================
 %%% API
@@ -36,6 +39,14 @@ reload(Applications, AppsToRestart) ->
 reload(Applications, AppsToRestart, ConfigFile) ->
     {ok, Config} = check_config(ConfigFile),
     reload_ll(Applications, Config, AppsToRestart).
+
+-spec get_all_env(ExceptApps:: [application()]) -> [{application(), env()}].
+get_all_env() -> get_all_env([]).
+get_all_env(ExceptApps) ->
+    AppsInfo = application:which_applications(), 
+    [{Name, application:get_all_env(Name)}
+        || {Name, _, _} <- AppsInfo,
+            not lists:member(Name, ExceptApps)].
 
 %%%===================================================================
 %%% Internal functions
