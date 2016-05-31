@@ -87,7 +87,8 @@ parse_config(File) ->
 reload_ll(Applications, Config, AppsToRestart) ->
     case application_specs(Applications) of
         {incorrect_specs, IncorrectApps} ->
-            lager:error("Unable to reload applications configs.~n The following applications have incorrect specifications ~p", [IncorrectApps]),
+            error_logger:error_msg("Unable to reload applications configs.~n "
+                                   "The following applications have incorrect specifications ~p", [IncorrectApps]),
             {error, {incorrect_specs, IncorrectApps}};
         Specs ->
             {change_application_data(Specs, Config, AppsToRestart), Applications}
@@ -119,7 +120,7 @@ parse_app_file(AppSpecPath) ->
 
 
 change_application_data(Specs, Config, AppsToRestart) ->
-    lager:info("Update configurations for the following applications: ~p", [[App || {_, App, _} <- Specs]]),
+    error_logger:info_msg("Update configurations for the following applications: ~p", [[App || {_, App, _} <- Specs]]),
     % Fetch OLD applications' environment from
     % application controller's internal ETS table.
     OldEnv = application_controller:prep_config_change(),
