@@ -45,7 +45,7 @@ reconfigure_supervisor(SupName, Specs) ->
 
     {Deleted, New, Changed, _Unchanged} = extract_children(SupName, Specs),
     reconfigure_supervisor_ll(SupName, Deleted, New, Changed, 0).
-    
+
 start_children(Module, Config) ->
     start_children(Module, Module, Config).
 
@@ -76,11 +76,18 @@ reconfigure_supervisor_tree(SupName, Specs) ->
 %%%======================================================
 
 get_supervisor_state(SupPid) ->
-    {status, _Pid, {module, _Mod}, 
+    {status, _Pid, {module, _Mod},
      [_PDict, _SysState, _Parent, _Dbg, Misc]} = sys:get_status(SupPid),
-    case Misc of
-        [_Name, State1, _Type, _Time] -> State1;
-        [_Header, _Data, {data, [{"State", State2}]}] -> State2
+
+    %% loop through all data keys in the misc status
+    case lists:filtermap(fun(Data) ->
+                                 case proplists:get_value("State", Data) of
+                                     undefined -> false;
+                                     State -> {true, State}
+                                 end
+                         end, proplists:get_all_values(data, Misc)) of
+        [] -> undefined;
+        [State] -> State
     end.
 
 reconfigure_supervisor_ll(SupName, Deleted, New, Changed, N) ->
@@ -287,6 +294,6 @@ change_specs(Specs) ->
     lists:map(fun change_spec/1, Specs).
 
 change_spec({Id, MFA, _RestartType, Timeout, Type, Modules}) ->
-    {Id, MFA, some_type, Timeout, Type, Modules}. 
-    
+    {Id, MFA, some_type, Timeout, Type, Modules}.
+
 -endif.
